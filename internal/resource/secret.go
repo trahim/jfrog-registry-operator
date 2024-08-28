@@ -116,17 +116,23 @@ func CreateOrUpdateSecret(req ctrl.Request, ctx context.Context, tokenDetails *t
 	auth := fmt.Sprintf("%s%s%s", tokenDetails.Username, ":", tokenDetails.Token)
 	tokenb64 := base64.StdEncoding.EncodeToString([]byte(auth))
 
-	secretObj.Data = map[string][]byte{
-		".dockerconfigjson": []byte(fmt.Sprintf(
-			`{
-			"auths": {
-				"%s": {
-					"auth": "%s"
+	if secretRotator.secretType == "dockerconfigjson" {
+		secretObj.Data = map[string][]byte{
+			".dockerconfigjson": []byte(fmt.Sprintf(
+				`{
+				"auths": {
+					"%s": {
+						"auth": "%s"
+					}
 				}
-			}
-		}`, tokenDetails.ArtifactoryUrl, tokenb64)),
+			}`, tokenDetails.ArtifactoryUrl, tokenb64)),
+		}
+		secretObj.Type = v1.SecretTypeDockerConfigJson
+	} else if secretRotator.secretType == "Opaque" {
+		secretObj.Data["username"] = []byte(tokenDetails.Username)
+		secretObj.Data["token"] = []byte(tokenDetails.Token)
+		secretObj.Type = v1.SecretTypeOpaque
 	}
-	secretObj.Type = v1.SecretTypeDockerConfigJson
 
 	err = k8sClient.Update(ctx, secretObj)
 	if err != nil {

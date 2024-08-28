@@ -61,6 +61,9 @@ type SecretRotatorSpec struct {
 
 	// Security holding tls/ssl certificates details
 	Security SecurityDetails `json:"security,omitempty"`
+
+	// SecretType can create dockerjson or user password
+	SecretType string `default:"dockerconfigjson" json:"secretType,omitempty"`
 }
 
 // SecurityDetails defines details for certificates, fields are insecureSkipVerify, secret nameand enable flag.
